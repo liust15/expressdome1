@@ -4,11 +4,41 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-
+const orm = require('orm')
+const mysql = require("mysql");
+const SQL_URL = "mysql://root:123456@120.79.148.71:3306/toutiao"
 var index = require('./routes/index');
 var users = require('./routes/users');
 
 var app = express();
+app.use(bodyParser.json({limit: '1mb'}));  //body-parser 解析json格式数据
+app.use(bodyParser.urlencoded({extended: true}));    //此项必须在 bodyParser.json 下面,为参数编码
+app.all('*', function (req, res, next) {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Content-Length, Authorization, Accept, X-Requested-With , yourHeaderFeild');
+  res.header('Access-Control-Allow-Methods', 'PUT, POST, GET, DELETE, OPTIONS');
+  if (req.method == 'OPTIONS') {
+      res.send(200);
+      /让options请求快速返回/
+  }
+  else {
+      next();
+  }
+});
+app.use(orm.express(SQL_URL, {
+  define: function (db, models, next) {
+      models.Weixin_toutiao  = db.define("weixin_toutiao", {
+          id: Number,
+          image_url: String,
+          title: String,
+          media_creator_id: String,
+          media_name: String,
+      });
+      db.sync()
+      next();
+  }
+}));
+
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
